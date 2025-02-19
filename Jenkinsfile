@@ -22,13 +22,8 @@ pipeline {
             }
         }
         
-        stage('Take User Input') {
-            steps {
-                echo "Using parameters: FIRST_NUMBER=${params.FIRST_NUMBER}, SECOND_NUMBER=${params.SECOND_NUMBER}, OPERATION=${params.OPERATION}"
-            }
-        }
         
-        stage('Print Current Directory') {
+        stage('Print Directory') {
             steps {
                 script {
                     echo "Current directory: ${pwd()}"
@@ -46,7 +41,7 @@ pipeline {
 }
 
         
-        stage('Create and Run Java Program') {
+        stage('Run Java Program') {
             steps {
                 script {
                     writeFile file: 'Calculator.java', text: '''
@@ -76,14 +71,13 @@ pipeline {
         stage('Directory Operations') {
             steps {
                 script {
-                    // Create directory
+                 
                     bat '''
                         mkdir test_directory
                         echo Directory created
                         dir
                     '''
-                    
-                    // Delete directory
+                
                     bat '''
                         rmdir /s /q test_directory
                         echo Directory deleted
