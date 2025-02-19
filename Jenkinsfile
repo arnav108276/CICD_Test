@@ -35,7 +35,7 @@ pipeline {
         stage('Change Directory to Desktop') {
             steps {
                 script {
-                    DESKTOP_DIR = "C:\Users\Arnav\OneDrive\Desktop\lab7-jenkins"
+                    DESKTOP_DIR = "C:/Users/Arnav/OneDrive/Desktop/lab7-jenkins"
                     sh "cd ${DESKTOP_DIR} && echo 'Changed directory to Desktop'"
                 }
             }
