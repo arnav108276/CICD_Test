@@ -1,96 +1,78 @@
 pipeline {
     agent any
-    
-    parameters {
-        string(name: 'FIRST_NUMBER', defaultValue: '0', description: 'Enter first number')
-        string(name: 'SECOND_NUMBER', defaultValue: '0', description: 'Enter second number')
-        choice(name: 'OPERATION', choices: ['addition', 'subtraction'], description: 'Select operation')
-    }
-    
+
     stages {
-        stage('Clone Git Project') {
+        stage('Clone Repository') {
             steps {
-                git branch: 'main', 
-                    url: 'https://github.com/arnav108276/CICD_Test.git'
-                echo "Git repository cloned successfully"
+                git url: 'https://github.com/arnav108276/CICD_Test.git', branch: 'main'
             }
         }
-        
-        stage('Print Hello') {
+
+        stage('Print Message') {
             steps {
-                echo "Hello"
+                echo 'Hello'
             }
         }
-        
-        stage('Take User Input') {
-            steps {
-                echo "Using parameters: FIRST_NUMBER=${params.FIRST_NUMBER}, SECOND_NUMBER=${params.SECOND_NUMBER}, OPERATION=${params.OPERATION}"
-            }
-        }
-        
-        stage('Print Current Directory') {
-            steps {
-                sh 'pwd'
-            }
-        }
-        
-        stage('Change to Desktop') {
-            steps {
-                sh '''
-                    echo "Current directory before change:"
-                    pwd
-                    cd ~/Desktop
-                    echo "Current directory after change:"
-                    pwd
-                '''
-            }
-        }
-        
-        stage('Create and Run Java Program') {
+
+        stage('User Input') {
             steps {
                 script {
-                    // Create Calculator.java file
-                    writeFile file: 'Calculator.java', text: '''
-                        public class Calculator {
-                            public static void main(String[] args) {
-                                String operation = args[0];
-                                int num1 = Integer.parseInt(args[1]);
-                                int num2 = Integer.parseInt(args[2]);
-                                
-                                if (operation.equals("addition")) {
-                                    System.out.println("Result: " + (num1 + num2));
-                                } else if (operation.equals("subtraction")) {
-                                    System.out.println("Result: " + (num1 - num2));
-                                }
-                            }
-                        }
-                    '''
-                    
-                    // Compile and run Java file
-                    sh '''
-                        javac Calculator.java
-                        java Calculator ${OPERATION} ${FIRST_NUMBER} ${SECOND_NUMBER}
-                    '''
+                    def userInput = input message: 'Enter a value:', parameters: [string(name: 'USER_INPUT', description: 'Type something')]
+                    echo "User entered: ${userInput}"
                 }
             }
         }
-        
-        stage('Directory Operations') {
+
+        stage('Print Current Directory') {
             steps {
                 script {
-                    // Create directory
-                    sh '''
-                        mkdir test_directory
-                        echo "Directory created"
-                        ls -la
-                    '''
+                    def currentDir = pwd()
+                    echo "Current directory: ${currentDir}"
+                }
+            }
+        }
+
+        stage('Change Directory to Desktop') {
+            steps {
+                bat 'cd C:\Users\Arnav\OneDrive\Desktop'
+            }
+        }
+
+        stage('Compile and Run Java on Desktop') {
+            steps {
+                bat '''
+                cd %USERPROFILE%\Desktop
+                echo public class Main { public static void main(String[] args) { System.out.println("Hello from Java"); } } > Simple.java
+                javac Simple.java
+                java Simple
+                '''
+            }
+        }
+
+        stage('Create and Delete Directory') {
+            steps {
+                script {
+                    sh 'mkdir SampleDir'
+                    echo "SampleDir created"
+                    sh 'rm -rf SampleDir'
+                    echo "SampleDir deleted"
+                }
+            }
+        }
+
+        stage('Java Calculator') {
+            steps {
+                script {
+                    def task = input message: 'Choose operation:', parameters: [choice(name: 'TASK', choices: ['add', 'sub'], description: 'Select operation')]
+                    def num1 = input message: 'Enter first number:', parameters: [string(name: 'NUM1', defaultValue: '0')]
+                    def num2 = input message: 'Enter second number:', parameters: [string(name: 'NUM2', defaultValue: '0')]
                     
-                    // Delete directory
-                    sh '''
-                        rm -rf test_directory
-                        echo "Directory deleted"
-                        ls -la
-                    '''
+                    bat """
+                    cd %USERPROFILE%\Desktop
+                    echo public class Calculator { public static void main(String[] args) { int num1 = Integer.parseInt(args[0]); int num2 = Integer.parseInt(args[1]); String task = args[2]; System.out.println(task.equals(\"add\") ? \"Result: \" + (num1 + num2) : \"Result: \" + (num1 - num2)); } } > Calculator.java
+                    javac Calculator.java
+                    java Calculator ${num1} ${num2} ${task}
+                    """
                 }
             }
         }
