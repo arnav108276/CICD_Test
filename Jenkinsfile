@@ -34,7 +34,7 @@ pipeline {
 
         stage('Change Directory to Desktop') {
             steps {
-                bat 'cd C:\Users\Arnav\OneDrive\Desktop'
+                bat 'cd "C:\Users\Arnav\OneDrive\Desktop"'
             }
         }
 
