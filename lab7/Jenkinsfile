@@ -24,16 +24,16 @@ pipeline {
         }
 
         stage('Compile and Run Java') {
-            steps {
-                script {
-                    sh '''
-                    echo 'public class MyProgram { public static void main(String[] args) { System.out.println("Hello from Java!"); } }' > MyProgram.java
-                    javac MyProgram.java
-                    java MyProgram
-                    '''
-                }
-            }
+    steps {
+        script {
+            sh '''
+            javac Main.java
+            java Main
+            '''
         }
+    }
+}
+
 
         stage('Delete Directory') {
             steps {
