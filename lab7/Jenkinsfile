@@ -1,0 +1,76 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git url: 'https://github.com/arnav108276/CICD_Test.git', branch: 'main'
+            }
+        }
+
+        stage('Print Message') {
+            steps {
+                echo 'Hello from Jenkins!'
+            }
+        }
+
+        stage('User Input') {
+            steps {
+                script {
+                    def userInput = input message: 'Enter a value:', parameters: [string(name: 'USER_INPUT', description: 'Type something')]
+                    echo "User entered: ${userInput}"
+                }
+            }
+        }
+
+        stage('Compile and Run Java') {
+            steps {
+                script {
+                    sh '''
+                    echo 'public class MyProgram { public static void main(String[] args) { System.out.println("Hello from Java!"); } }' > MyProgram.java
+                    javac MyProgram.java
+                    java MyProgram
+                    '''
+                }
+            }
+        }
+
+        stage('Delete Directory') {
+            steps {
+                script {
+                    def dirExists = sh(script: 'if [ -d "SampleDir" ]; then echo "exists"; else echo "not exists"; fi', returnStdout: true).trim()
+                    if (dirExists == "exists") {
+                        sh 'rm -rf SampleDir'
+                        echo "Deleted directory from project folder"
+                    } else {
+                        echo "Already deleted"
+                    }
+                }
+            }
+        }
+
+        stage('Calculator Program') {
+            steps {
+                script {
+                    def task = input message: 'Choose operation:', parameters: [choice(name: 'TASK', choices: ['add', 'sub'], description: 'Select operation')]
+                    def num1 = input message: 'Enter first number:', parameters: [string(name: 'NUM1', defaultValue: '0')]
+                    def num2 = input message: 'Enter second number:', parameters: [string(name: 'NUM2', defaultValue: '0')]
+
+                    sh """
+                    echo 'public class Calculator {
+                        public static void main(String[] args) {
+                            int num1 = Integer.parseInt(args[0]);
+                            int num2 = Integer.parseInt(args[1]);
+                            String task = args[2];
+
+                            System.out.println(task.equals("add") ? "Result: " + (num1 + num2) : "Result: " + (num1 - num2));
+                        }
+                    }' > Calculator.java
+                    javac Calculator.java
+                    java Calculator ${num1} ${num2} ${task}
+                    """
+                }
+            }
+        }
+    }
+}
