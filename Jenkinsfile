@@ -1,107 +1,93 @@
 pipeline {
     agent any
-
+    
+    parameters {
+        string(name: 'FIRST_NUMBER', defaultValue: '0', description: 'Enter first number')
+        string(name: 'SECOND_NUMBER', defaultValue: '0', description: 'Enter second number')
+        choice(name: 'OPERATION', choices: ['addition', 'subtraction'], description: 'Select operation')
+    }
+    
     stages {
-        stage('Clone Repository') {
+        stage('Clone Git Project') {
             steps {
-                git url: 'https://github.com/arnav108276/CICD_Test.git', branch: 'main'
+                git branch: 'main',  
+                    url: 'https://github.com/arnav108276/CICD_Test.git'
+                echo "Git repository cloned successfully"
             }
         }
-
+        
         stage('Print Hello') {
             steps {
-                echo 'Hello'
+                echo "Hello from Arnav"
             }
         }
-
-        stage('User Input') {
+        
+        stage('Take User Input') {
             steps {
-                script {
-                    def userInput = input message: 'Enter a value:', parameters: [string(defaultValue: '', description: 'Type something', name: 'USER_INPUT')]
-                    echo "User entered: ${userInput}"
-                }
+                echo "Using parameters: FIRST_NUMBER=${params.FIRST_NUMBER}, SECOND_NUMBER=${params.SECOND_NUMBER}, OPERATION=${params.OPERATION}"
             }
         }
-
-        stage('Current Directory') {
+        
+        stage('Print Current Directory') {
             steps {
                 script {
-                    def currentDir = sh(script: 'pwd', returnStdout: true).trim()
-                    echo "Current directory: ${currentDir}"
-                }
-            }
+                    echo "Current directory: ${pwd()}"
         }
+    }
+}
 
-        stage('Change Directory to Desktop') {
+        stage('Change to Desktop') {
+    steps {
+        bat '''
+            cd /d C:\\Users\\Arnav\\OneDrive\\Desktop\\lab7-jenkins
+            echo Changed directory
+        '''
+    }
+}
+
+        
+        stage('Create and Run Java Program') {
             steps {
                 script {
-                    DESKTOP_DIR = "C:/Users/Arnav/OneDrive/Desktop/lab7-jenkins"
-                    sh "cd ${DESKTOP_DIR} && echo 'Changed directory to Desktop'"
-                }
-            }
-        }
-
-        stage('Compile and Run Java File') {
-            steps {
-                script {
-                    sh '''
-                    echo 'public class MyProgram { public static void main(String[] args) { System.out.println("Hello from Java!"); } }' > MyProgram.java
-                    javac MyProgram.java
-                    java MyProgram
+                    writeFile file: 'Calculator.java', text: '''
+                        public class Calculator {
+                            public static void main(String[] args) {
+                                String operation = args[0];
+                                int num1 = Integer.parseInt(args[1]);
+                                int num2 = Integer.parseInt(args[2]);
+                                
+                                if (operation.equals("addition")) {
+                                    System.out.println("Result: " + (num1 + num2));
+                                } else if (operation.equals("subtraction")) {
+                                    System.out.println("Result: " + (num1 - num2));
+                                }
+                            }
+                        }
+                    '''
+                    
+                    bat '''
+                        javac Calculator.java
+                        java Calculator %OPERATION% %FIRST_NUMBER% %SECOND_NUMBER%
                     '''
                 }
             }
         }
-
-        stage('Delete Directory') {
+        
+        stage('Directory Operations') {
             steps {
                 script {
-                    def dirExists = sh(script: 'if [ -d "SampleDir" ]; then echo "exists"; else echo "not exists"; fi', returnStdout: true).trim()
-                    if (dirExists == "exists") {
-                        sh 'rm -rf SampleDir'
-                        echo "Deleted directory from project folder"
-                    } else {
-                        echo "Already deleted"
-                    }
-                }
-            }
-        }
-        stage('Get User Input for Java Program') {
-            steps {
-                script {
-                    env.TASK = input message: 'Choose operation:', parameters: [choice(choices: ['add', 'sub'], description: 'Select operation', name: 'TASK')]
-                    env.NUM1 = input message: 'Enter first integer:', parameters: [string(defaultValue: '0', description: 'First number', name: 'NUM1')]
-                    env.NUM2 = input message: 'Enter second integer:', parameters: [string(defaultValue: '0', description: 'Second number', name: 'NUM2')]
-                }
-            }
-        }
-
-        stage('Compile and Run Addition & Subtraction Program') {
-            steps {
-                script {
-                    sh '''
-                    echo 'public class Calculator {
-                        public static void main(String[] args) {
-                            if (args.length != 3) {
-                                System.out.println("Usage: java Calculator <add/sub> <num1> <num2>");
-                                return;
-                            }
-                            String task = args[0];
-                            int num1 = Integer.parseInt(args[1]);
-                            int num2 = Integer.parseInt(args[2]);
-
-                            if ("add".equalsIgnoreCase(task)) {
-                                System.out.println("Addition result: " + (num1 + num2));
-                            } else if ("sub".equalsIgnoreCase(task)) {
-                                System.out.println("Subtraction result: " + (num1 - num2));
-                            } else {
-                                System.out.println("Invalid task. Use 'add' or 'sub'.");
-                            }
-                        }
-                    }' > Calculator.java
-
-                    javac Calculator.java
-                    java Calculator ${TASK} ${NUM1} ${NUM2}
+                    // Create directory
+                    bat '''
+                        mkdir test_directory
+                        echo Directory created
+                        dir
+                    '''
+                    
+                    // Delete directory
+                    bat '''
+                        rmdir /s /q test_directory
+                        echo Directory deleted
+                        dir
                     '''
                 }
             }
