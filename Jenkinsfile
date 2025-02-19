@@ -8,7 +8,7 @@ pipeline {
             }
         }
 
-        stage('Print Message') {
+        stage('Print Hello') {
             steps {
                 echo 'Hello'
             }
@@ -17,16 +17,16 @@ pipeline {
         stage('User Input') {
             steps {
                 script {
-                    def userInput = input message: 'Enter a value:', parameters: [string(name: 'USER_INPUT', description: 'Type something')]
+                    def userInput = input message: 'Enter a value:', parameters: [string(defaultValue: '', description: 'Type something', name: 'USER_INPUT')]
                     echo "User entered: ${userInput}"
                 }
             }
         }
 
-        stage('Print Current Directory') {
+        stage('Current Directory') {
             steps {
                 script {
-                    def currentDir = pwd()
+                    def currentDir = sh(script: 'pwd', returnStdout: true).trim()
                     echo "Current directory: ${currentDir}"
                 }
             }
@@ -34,45 +34,75 @@ pipeline {
 
         stage('Change Directory to Desktop') {
             steps {
-                bat 'cd "C:\Users\Arnav\OneDrive\Desktop"'
-            }
-        }
-
-        stage('Compile and Run Java on Desktop') {
-            steps {
-                bat '''
-                cd %USERPROFILE%\Desktop
-                echo public class Main { public static void main(String[] args) { System.out.println("Hello from Java"); } } > Simple.java
-                javac Simple.java
-                java Simple
-                '''
-            }
-        }
-
-        stage('Create and Delete Directory') {
-            steps {
                 script {
-                    sh 'mkdir SampleDir'
-                    echo "SampleDir created"
-                    sh 'rm -rf SampleDir'
-                    echo "SampleDir deleted"
+                    DESKTOP_DIR = "C:\Users\Arnav\OneDrive\Desktop\lab7-jenkins"
+                    sh "cd ${DESKTOP_DIR} && echo 'Changed directory to Desktop'"
                 }
             }
         }
 
-        stage('Java Calculator') {
+        stage('Compile and Run Java File') {
             steps {
                 script {
-                    def task = input message: 'Choose operation:', parameters: [choice(name: 'TASK', choices: ['add', 'sub'], description: 'Select operation')]
-                    def num1 = input message: 'Enter first number:', parameters: [string(name: 'NUM1', defaultValue: '0')]
-                    def num2 = input message: 'Enter second number:', parameters: [string(name: 'NUM2', defaultValue: '0')]
-                    
-                    bat """
-                    cd %USERPROFILE%\Desktop
-                    echo public class Calculator { public static void main(String[] args) { int num1 = Integer.parseInt(args[0]); int num2 = Integer.parseInt(args[1]); String task = args[2]; System.out.println(task.equals(\"add\") ? \"Result: \" + (num1 + num2) : \"Result: \" + (num1 - num2)); } } > Calculator.java
+                    sh '''
+                    echo 'public class MyProgram { public static void main(String[] args) { System.out.println("Hello from Java!"); } }' > MyProgram.java
+                    javac MyProgram.java
+                    java MyProgram
+                    '''
+                }
+            }
+        }
+
+        stage('Delete Directory') {
+            steps {
+                script {
+                    def dirExists = sh(script: 'if [ -d "SampleDir" ]; then echo "exists"; else echo "not exists"; fi', returnStdout: true).trim()
+                    if (dirExists == "exists") {
+                        sh 'rm -rf SampleDir'
+                        echo "Deleted directory from project folder"
+                    } else {
+                        echo "Already deleted"
+                    }
+                }
+            }
+        }
+        stage('Get User Input for Java Program') {
+            steps {
+                script {
+                    env.TASK = input message: 'Choose operation:', parameters: [choice(choices: ['add', 'sub'], description: 'Select operation', name: 'TASK')]
+                    env.NUM1 = input message: 'Enter first integer:', parameters: [string(defaultValue: '0', description: 'First number', name: 'NUM1')]
+                    env.NUM2 = input message: 'Enter second integer:', parameters: [string(defaultValue: '0', description: 'Second number', name: 'NUM2')]
+                }
+            }
+        }
+
+        stage('Compile and Run Addition & Subtraction Program') {
+            steps {
+                script {
+                    sh '''
+                    echo 'public class Calculator {
+                        public static void main(String[] args) {
+                            if (args.length != 3) {
+                                System.out.println("Usage: java Calculator <add/sub> <num1> <num2>");
+                                return;
+                            }
+                            String task = args[0];
+                            int num1 = Integer.parseInt(args[1]);
+                            int num2 = Integer.parseInt(args[2]);
+
+                            if ("add".equalsIgnoreCase(task)) {
+                                System.out.println("Addition result: " + (num1 + num2));
+                            } else if ("sub".equalsIgnoreCase(task)) {
+                                System.out.println("Subtraction result: " + (num1 - num2));
+                            } else {
+                                System.out.println("Invalid task. Use 'add' or 'sub'.");
+                            }
+                        }
+                    }' > Calculator.java
+
                     javac Calculator.java
-                    java Calculator ${num1} ${num2} ${task}
-                    """
+                    java Calculator ${TASK} ${NUM1} ${NUM2}
+                    '''
                 }
             }
         }
